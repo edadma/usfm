@@ -104,7 +104,7 @@ def tokenize(input: CharReader): Seq[Token] =
         val plus =
           if r.ch == '+' then r.next
           else r
-        val (marker, r1) = consume(r.next, true)
+        val (marker, r1) = consume(plus, true)
 
         if marker.isEmpty then problem(r, "empty marker")
 
