@@ -68,6 +68,8 @@ val paragraphMarkers =
     "pc",
     "ph",
     "b",
+    "lit",
+    "pb",
   )
 val numberedMarkers =
   Set("toc", "toca", "imt", "is", "iq", "ili", "io", "imte", "mt", "mte", "ms", "s", "sd", "pi", "ph")
@@ -80,10 +82,12 @@ def tokenize(input: CharReader): Seq[Token] =
 
   def tokenize(r: CharReader): Seq[Token] =
     r.ch match
-      case CharReader.EOI      => buf.toSeq
-      case '\\'                =>
-      case w if w.isWhitespace =>
-      case _                   =>
+      case CharReader.EOI          => buf.toSeq
+      case '~'                     =>
+      case '/' if r.next.ch == '/' =>
+      case '\\'                    =>
+      case w if w.isWhitespace     =>
+      case _                       =>
   end tokenize
 
   tokenize(input)
