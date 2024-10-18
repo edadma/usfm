@@ -4,17 +4,23 @@ import io.github.edadma.char_reader.CharReader
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
+import scala.compiletime.uninitialized
 
 abstract class Token:
-  val pos: CharReader
-case class Paragraph(name: String, num: Option[Int], pos: CharReader) extends Token
-case class Character(name: String, pos: CharReader)                   extends Token
-case class Note(name: String, pos: CharReader)                        extends Token
-case class End(name: String, pos: CharReader)                         extends Token
-case class Text(s: String, pos: CharReader)                           extends Token
-case class Space(pos: CharReader)                                     extends Token
-case class NoBreakSpace(pos: CharReader)                              extends Token
-case class LineBreak(pos: CharReader)                                 extends Token
+  var pos: CharReader = uninitialized
+
+  def setPos(r: CharReader): Token =
+    pos = r
+    this
+
+case class Paragraph(name: String, num: Option[Int]) extends Token
+case class Character(name: String)                   extends Token
+case class Note(name: String)                        extends Token
+case class End(name: String)                         extends Token
+case class Text(s: String)                           extends Token
+case object Space                                    extends Token
+case object NoBreakSpace                             extends Token
+case object LineBreak                                extends Token
 
 val paragraphMarkers =
   Set(
@@ -87,7 +93,7 @@ private def consume(r: CharReader, restrict: Boolean, buf: StringBuilder = new S
     buf += r.ch
     consume(r.next, restrict, buf)
 
-def tokenize(input: CharReader): Seq[Token] =
+def tokenize(input: String): Seq[Token] =
   val buf = new ArrayBuffer[Token]
 
   @tailrec
@@ -95,10 +101,10 @@ def tokenize(input: CharReader): Seq[Token] =
     r.ch match
       case CharReader.EOI => buf.toSeq
       case '~' =>
-        buf += NoBreakSpace(r)
+        buf += NoBreakSpace
         tokenize(r.next)
       case '/' if r.next.ch == '/' =>
-        buf += LineBreak(r.next.next)
+        buf += LineBreak
         tokenize(r.next.next)
       case '\\' =>
         val plus =
@@ -111,7 +117,7 @@ def tokenize(input: CharReader): Seq[Token] =
         if r1.ch == '*' then
           if !delimitedMarkers(marker) then problem(r, "invalid end marker")
 
-          buf += End(marker, r)
+          buf += End(marker).setPos(r)
           tokenize(r1.next.skipWhitespace)
         else
           if paragraphMarkers(marker) then
@@ -121,26 +127,26 @@ def tokenize(input: CharReader): Seq[Token] =
             else
               (if numberedMarkers(marker) then "1" else "", r1)
 
-            buf += Paragraph(marker, if number.nonEmpty then Some(number.toInt) else None, r)
+            buf += Paragraph(marker, if number.nonEmpty then Some(number.toInt) else None).setPos(r)
             tokenize(r2.skipWhitespace)
           else if delimitedMarkers(marker) then
-            buf += Character(marker, r)
+            buf += Character(marker).setPos(r)
             tokenize(r1.skipWhitespace)
           else if characterMarkers(marker) then
-            buf += Character(marker, r)
+            buf += Character(marker).setPos(r)
             tokenize(r1.skipWhitespace)
           else problem(r, "invalid marker")
       case w if w.isWhitespace =>
-        if buf.nonEmpty && !buf.last.isInstanceOf[Space] then
-          buf += Space(r)
+        if buf.nonEmpty && buf.last != Space then
+          buf += Space
 
         tokenize(r.next.skipWhitespace)
       case _ =>
         val (text, r1) = consume(r, false)
 
-        buf += Text(text, r)
+        buf += Text(text)
         tokenize(r1)
   end tokenize
 
-  tokenize(input)
+  tokenize(CharReader.fromString(input))
 end tokenize
