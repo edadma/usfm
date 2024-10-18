@@ -12,6 +12,8 @@ case class Note(name: String, pos: CharReader)                        extends To
 case class End(name: String, pos: CharReader)                         extends Token
 case class Text(s: String, pos: CharReader)                           extends Token
 case class Space(pos: CharReader)                                     extends Token
+case class NoBreakSpace(pos: CharReader)                              extends Token
+case class LineBreak(pos: CharReader)                                 extends Token
 
 val paragraphMarkers =
   Set(
@@ -78,17 +80,26 @@ val characterMarkers =
   Set("ior", "iqt", "rq", "ca", "va", "vp")
 val character1Markers =
   Set("v")
+
 def tokenize(input: CharReader): Seq[Token] =
   val buf = new ArrayBuffer[Token]
 
   def tokenize(r: CharReader): Seq[Token] =
     r.ch match
-      case CharReader.EOI          => buf.toSeq
-      case '~'                     =>
+      case CharReader.EOI => buf.toSeq
+      case '~' =>
+        buf += NoBreakSpace(r)
+        tokenize(r.next)
       case '/' if r.next.ch == '/' =>
-      case '\\'                    =>
-      case w if w.isWhitespace     =>
-      case _                       =>
+        buf += LineBreak(r.next.next)
+        tokenize(r.next.next)
+      case '\\' =>
+      case w if w.isWhitespace =>
+        if buf.nonEmpty && !buf.last.isInstanceOf[Space] then
+          buf += Space(r)
+
+        tokenize(r.next)
+      case _ =>
   end tokenize
 
   tokenize(input)
