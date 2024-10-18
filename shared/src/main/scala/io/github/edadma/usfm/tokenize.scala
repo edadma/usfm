@@ -83,9 +83,10 @@ val paragraphMarkers =
     "lit",
     "pb",
     "q",
+    "li",
   )
 val numberedMarkers =
-  Set("toc", "toca", "imt", "is", "iq", "ili", "io", "imte", "mt", "mte", "ms", "s", "sd", "pi", "ph", "q")
+  Set("toc", "toca", "imt", "is", "iq", "ili", "io", "imte", "mt", "mte", "ms", "s", "sd", "pi", "ph", "q", "li")
 val pairedMarkers = Set(
   "ior",
   "iqt",
