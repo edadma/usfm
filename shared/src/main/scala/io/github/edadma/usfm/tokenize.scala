@@ -157,7 +157,9 @@ private def consumeUpTo(r: CharReader, delim: Char, buf: StringBuilder = new Str
     buf += r.ch
     consumeUpTo(r.next, delim, buf)
 
-def tokenize(input: String): LazyList[Token] =
+def tokenize(input: String): LazyList[Token] = tokenize(CharReader.fromString(input))
+
+def tokenize(input: CharReader): LazyList[Token] =
   def tokenize(r: CharReader): LazyList[Token] =
     r.ch match
       case CharReader.EOI          => LazyList(EOI)
@@ -219,5 +221,5 @@ def tokenize(input: String): LazyList[Token] =
         Text(text) #:: tokenize(r1)
   end tokenize
 
-  tokenize(CharReader.fromString(input))
+  tokenize(input)
 end tokenize
