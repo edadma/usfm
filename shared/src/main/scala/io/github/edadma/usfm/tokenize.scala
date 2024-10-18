@@ -77,21 +77,20 @@ val paragraphMarkers =
   )
 val numberedMarkers =
   Set("toc", "toca", "imt", "is", "iq", "ili", "io", "imte", "mt", "mte", "ms", "s", "sd", "pi", "ph")
-val delimitedMarkers =
-  Set("ior", "iqt", "rq", "ca", "va", "vp")
-val character1Markers =
-  Set("v")
+val delimitedMarkers = Set("ior", "iqt", "rq", "ca", "va", "vp")
+val characterMarkers = Set("v")
 
 @tailrec
-private def consume(r: CharReader, buf: StringBuilder = new StringBuilder): (String, CharReader) =
-  if r.ch.isWhitespace || r.ch == '\\' || r.ch == '*' || r.eoi then (buf.toString, r)
+private def consume(r: CharReader, restrict: Boolean, buf: StringBuilder = new StringBuilder): (String, CharReader) =
+  if r.ch.isWhitespace || (restrict && r.ch.isDigit) || r.ch == '\\' || r.ch == '*' || r.eoi then (buf.toString, r)
   else
     buf += r.ch
-    consume(r.next)
+    consume(r.next, restrict, buf)
 
 def tokenize(input: CharReader): Seq[Token] =
   val buf = new ArrayBuffer[Token]
 
+  @tailrec
   def tokenize(r: CharReader): Seq[Token] =
     r.ch match
       case CharReader.EOI => buf.toSeq
@@ -105,7 +104,7 @@ def tokenize(input: CharReader): Seq[Token] =
         val plus =
           if r.ch == '+' then r.next
           else r
-        val (marker, r1) = consume(r.next)
+        val (marker, r1) = consume(r.next, true)
 
         if marker.isEmpty then problem(r, "empty marker")
 
@@ -113,24 +112,34 @@ def tokenize(input: CharReader): Seq[Token] =
           if !delimitedMarkers(marker) then problem(r, "invalid end marker")
 
           buf += End(marker, r)
-          tokenize(r1.next)
+          tokenize(r1.next.skipWhitespace)
         else
           if paragraphMarkers(marker) then
-            buf += Paragraph(marker, None, r)
-            tokenize(r1)
+            val (number, r2) = if r.ch.isDigit then
+              if !numberedMarkers(marker) then problem(r, "not a numbered marker")
+              consume(r1, false)
+            else
+              (if numberedMarkers(marker) then "1" else "", r1)
+
+            buf += Paragraph(marker, if number.nonEmpty then Some(number.toInt) else None, r)
+            tokenize(r2.skipWhitespace)
           else if delimitedMarkers(marker) then
             buf += Character(marker, r)
-            tokenize(r1)
-          else if character1Markers(marker) then
+            tokenize(r1.skipWhitespace)
+          else if characterMarkers(marker) then
             buf += Character(marker, r)
-            tokenize(r1)
+            tokenize(r1.skipWhitespace)
           else problem(r, "invalid marker")
       case w if w.isWhitespace =>
         if buf.nonEmpty && !buf.last.isInstanceOf[Space] then
           buf += Space(r)
 
-        tokenize(r.next)
+        tokenize(r.next.skipWhitespace)
       case _ =>
+        val (text, r1) = consume(r, false)
+
+        buf += Text(text, r)
+        tokenize(r1)
   end tokenize
 
   tokenize(input)
