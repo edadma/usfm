@@ -3,30 +3,30 @@ package io.github.edadma.usfm
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-class Tests extends AnyFreeSpec with Matchers:
+class TokenizeTests extends AnyFreeSpec with Matchers:
 
   "text 1" in {
-    tokenize("asdf") shouldBe Seq(Text("asdf"))
+    tokenize("asdf") shouldBe Seq(Text("asdf"), EOI)
   }
 
   "text 2" in {
-    tokenize("asdf zxcv") shouldBe Seq(Text("asdf"), Space, Text("zxcv"))
+    tokenize("asdf zxcv") shouldBe Seq(Text("asdf"), Space, Text("zxcv"), EOI)
   }
 
   "text 3" in {
-    tokenize("asdf  zxcv") shouldBe Seq(Text("asdf"), Space, Text("zxcv"))
+    tokenize("asdf  zxcv") shouldBe Seq(Text("asdf"), Space, Text("zxcv"), EOI)
   }
 
   "text 4" in {
-    tokenize("asdf\nzxcv") shouldBe Seq(Text("asdf"), Space, Text("zxcv"))
+    tokenize("asdf\nzxcv") shouldBe Seq(Text("asdf"), Space, Text("zxcv"), EOI)
   }
 
   "paragraph markers 1" in {
-    tokenize("""\p""") shouldBe Seq(Paragraph("p", None))
+    tokenize("""\p""") shouldBe Seq(Paragraph("p", None), EOI)
   }
 
   "paragraph markers 2" in {
-    tokenize("""\p asdf""") shouldBe Seq(Paragraph("p", None), Text("asdf"))
+    tokenize("""\p asdf""") shouldBe Seq(Paragraph("p", None), Text("asdf"), EOI)
   }
 
   "paragraph markers 3" in {
@@ -34,19 +34,19 @@ class Tests extends AnyFreeSpec with Matchers:
   }
 
   "line break 1" in {
-    tokenize("""//""") shouldBe Seq(LineBreak)
+    tokenize("""//""") shouldBe Seq(LineBreak, EOI)
   }
 
   "line break with text" in {
-    tokenize("""asdf//zxcv""") shouldBe Seq(Text("asdf"), LineBreak, Text("zxcv"))
+    tokenize("""asdf//zxcv""") shouldBe Seq(Text("asdf"), LineBreak, Text("zxcv"), EOI)
   }
 
   "no-break space" in {
-    tokenize("asdf~zxcv") shouldBe Seq(Text("asdf"), NoBreakSpace, Text("zxcv"))
+    tokenize("asdf~zxcv") shouldBe Seq(Text("asdf"), NoBreakSpace, Text("zxcv"), EOI)
   }
 
   "multiple newlines treated as space" in {
-    tokenize("asdf\n\n\nzxcv") shouldBe Seq(Text("asdf"), Space, Text("zxcv"))
+    tokenize("asdf\n\n\nzxcv") shouldBe Seq(Text("asdf"), Space, Text("zxcv"), EOI)
   }
 
   "empty marker" in {
@@ -77,5 +77,5 @@ class Tests extends AnyFreeSpec with Matchers:
 //  }
 
   "empty input" in {
-    tokenize("") shouldBe Seq.empty
+    tokenize("") shouldBe Seq(EOI)
   }

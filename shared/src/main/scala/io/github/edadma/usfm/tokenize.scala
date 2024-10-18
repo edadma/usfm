@@ -22,6 +22,7 @@ case class Text(s: String)                           extends Token
 case object Space                                    extends Token
 case object NoBreakSpace                             extends Token
 case object LineBreak                                extends Token
+case object EOI                                      extends Token
 
 val paragraphMarkers =
   Set(
@@ -147,6 +148,7 @@ private def consume(r: CharReader, restrict: Boolean, buf: StringBuilder = new S
     buf += r.ch
     consume(r.next, restrict, buf)
 
+@tailrec
 private def consumeUpTo(r: CharReader, delim: Char, buf: StringBuilder = new StringBuilder): (String, CharReader) =
   if r.ch == delim then
     (buf.toString, r.next.skipWhitespace)
@@ -158,7 +160,7 @@ private def consumeUpTo(r: CharReader, delim: Char, buf: StringBuilder = new Str
 def tokenize(input: String): LazyList[Token] =
   def tokenize(r: CharReader): LazyList[Token] =
     r.ch match
-      case CharReader.EOI          => LazyList.empty
+      case CharReader.EOI          => LazyList(EOI)
       case '~'                     => NoBreakSpace #:: tokenize(r.next)
       case '/' if r.next.ch == '/' => LineBreak #:: tokenize(r.next.next)
       case '\\' =>
