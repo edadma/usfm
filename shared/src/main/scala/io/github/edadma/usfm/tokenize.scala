@@ -6,11 +6,12 @@ import scala.collection.mutable.ArrayBuffer
 
 abstract class Token:
   val pos: CharReader
-case class Paragraph(name: String, pos: CharReader, num: Option[Int]) extends Token
+case class Paragraph(name: String, num: Option[Int], pos: CharReader) extends Token
 case class Character(name: String, pos: CharReader)                   extends Token
 case class Note(name: String, pos: CharReader)                        extends Token
 case class End(name: String, pos: CharReader)                         extends Token
 case class Text(s: String, pos: CharReader)                           extends Token
+case class Space(pos: CharReader)                                     extends Token
 
 val paragraphMarkers =
   Set(
