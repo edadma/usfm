@@ -2,6 +2,7 @@ package io.github.edadma.usfm
 
 import io.github.edadma.char_reader.CharReader
 
+import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 
 abstract class Token:
@@ -76,10 +77,17 @@ val paragraphMarkers =
   )
 val numberedMarkers =
   Set("toc", "toca", "imt", "is", "iq", "ili", "io", "imte", "mt", "mte", "ms", "s", "sd", "pi", "ph")
-val characterMarkers =
+val delimitedMarkers =
   Set("ior", "iqt", "rq", "ca", "va", "vp")
 val character1Markers =
   Set("v")
+
+@tailrec
+private def consume(r: CharReader, buf: StringBuilder = new StringBuilder): (String, CharReader) =
+  if r.ch.isWhitespace || r.ch == '\\' || r.ch == '*' || r.eoi then (buf.toString, r)
+  else
+    buf += r.ch
+    consume(r.next)
 
 def tokenize(input: CharReader): Seq[Token] =
   val buf = new ArrayBuffer[Token]
@@ -94,6 +102,29 @@ def tokenize(input: CharReader): Seq[Token] =
         buf += LineBreak(r.next.next)
         tokenize(r.next.next)
       case '\\' =>
+        val plus =
+          if r.ch == '+' then r.next
+          else r
+        val (marker, r1) = consume(r.next)
+
+        if marker.isEmpty then problem(r, "empty marker")
+
+        if r1.ch == '*' then
+          if !delimitedMarkers(marker) then problem(r, "invalid end marker")
+
+          buf += End(marker, r)
+          tokenize(r1.next)
+        else
+          if paragraphMarkers(marker) then
+            buf += Paragraph(marker, None, r)
+            tokenize(r1)
+          else if delimitedMarkers(marker) then
+            buf += Character(marker, r)
+            tokenize(r1)
+          else if character1Markers(marker) then
+            buf += Character(marker, r)
+            tokenize(r1)
+          else problem(r, "invalid marker")
       case w if w.isWhitespace =>
         if buf.nonEmpty && !buf.last.isInstanceOf[Space] then
           buf += Space(r)
