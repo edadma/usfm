@@ -5,6 +5,6 @@ import io.github.edadma.char_reader.CharReader
 import pprint.pprintln
 
 @main def run(): Unit =
-  val toks = tokenize(CharReader.fromFile("bsb_usfm/01GENBSB.usfm"))
+  val toks = tokenize(CharReader.fromFile("bsb_usfm/42MRKBSB.usfm"))
 
   pprintln(toks.length)

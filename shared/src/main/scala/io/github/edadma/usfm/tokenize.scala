@@ -145,11 +145,11 @@ val characterMarkers = Set(
   "ft", // note ???
 )
 val noteMarkers = Set("f", "fe")
-val delimiters  = Set('\\', '/', '~', '*', '|')
+val delimiters  = Set('\\', '~', '*', '|')
 
 @tailrec
 private def consume(r: CharReader, restrict: Boolean, buf: StringBuilder = new StringBuilder): (String, CharReader) =
-  if r.ch.isWhitespace || (restrict && r.ch.isDigit) || delimiters(r.ch) || r.eoi
+  if r.ch.isWhitespace || (restrict && r.ch.isDigit) || delimiters(r.ch) || (r.ch == '/' && r.next.ch == '/') || r.eoi
   then (buf.toString, r)
   else
     buf += r.ch
