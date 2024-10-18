@@ -3,7 +3,7 @@ package io.github.edadma.usfm
 import io.github.edadma.char_reader.CharReader
 
 import scala.annotation.tailrec
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable
 import scala.compiletime.uninitialized
 
 abstract class Token:
@@ -15,6 +15,7 @@ abstract class Token:
 
 case class Paragraph(name: String, num: Option[Int]) extends Token
 case class Character(name: String)                   extends Token
+case class Attributes(attr: Map[String, String])     extends Token
 case class Note(name: String)                        extends Token
 case class End(name: String)                         extends Token
 case class Text(s: String)                           extends Token
@@ -83,16 +84,25 @@ val paragraphMarkers =
   )
 val numberedMarkers =
   Set("toc", "toca", "imt", "is", "iq", "ili", "io", "imte", "mt", "mte", "ms", "s", "sd", "pi", "ph")
-val delimitedMarkers = Set("ior", "iqt", "rq", "ca", "va", "vp")
+val pairedMarkers    = Set("ior", "iqt", "rq", "ca", "va", "vp")
 val characterMarkers = Set("v")
+val delimiters       = Set('\\', '/', '~', '*', '|')
 
 @tailrec
 private def consume(r: CharReader, restrict: Boolean, buf: StringBuilder = new StringBuilder): (String, CharReader) =
-  if r.ch.isWhitespace || (restrict && r.ch.isDigit) || r.ch == '\\' || r.ch == '/' || r.ch == '~' || r.ch == '*' || r.eoi
+  if r.ch.isWhitespace || (restrict && r.ch.isDigit) || delimiters(r.ch) || r.eoi
   then (buf.toString, r)
   else
     buf += r.ch
     consume(r.next, restrict, buf)
+
+private def consumeUpTo(r: CharReader, delim: Char, buf: StringBuilder = new StringBuilder): (String, CharReader) =
+  if r.ch == delim then
+    (buf.toString, r.next.skipWhitespace)
+  else if r.eoi then problem(r, "unexpected end of input in attribute")
+  else
+    buf += r.ch
+    consumeUpTo(r.next, delim, buf)
 
 def tokenize(input: String): LazyList[Token] =
   def tokenize(r: CharReader): LazyList[Token] =
@@ -109,7 +119,7 @@ def tokenize(input: String): LazyList[Token] =
         if marker.isEmpty then problem(plus, "empty marker")
 
         if r1.ch == '*' then
-          if !delimitedMarkers(marker) then problem(r, "invalid end marker")
+          if !pairedMarkers(marker) then problem(r, "invalid end marker")
 
           End(marker).setPos(r) #:: tokenize(r1.next.skipWhitespace)
         else
@@ -123,10 +133,33 @@ def tokenize(input: String): LazyList[Token] =
             Paragraph(marker, if number.nonEmpty then Some(number.toInt) else None).setPos(r) #:: tokenize(
               r2.skipWhitespace,
             )
-          else if delimitedMarkers(marker) then Character(marker).setPos(r) #:: tokenize(r1.skipWhitespace)
+          else if pairedMarkers(marker) then Character(marker).setPos(r) #:: tokenize(r1.skipWhitespace)
           else if characterMarkers(marker) then Character(marker).setPos(r) #:: tokenize(r1.skipWhitespace)
           else problem(r, "invalid marker")
       case w if w.isWhitespace => Space #:: tokenize(r.next.skipWhitespace)
+      case '|' =>
+        val map = new mutable.HashMap[String, String]
+
+        @tailrec
+        def attribute(r: CharReader): CharReader =
+          val r1        = r.skipWhitespace
+          val (key, r2) = consumeUpTo(r1, '=')
+          val r3        = r2.skipWhitespace
+
+          if r3.ch != '"' then problem(r3, "expected attribute value")
+
+          val (value, r4) = consumeUpTo(r3.next, '"')
+          val r5          = r4.skipWhitespace
+
+          map += (key -> value)
+
+          if r5.ch.isLetter then attribute(r5)
+          else r5
+        end attribute
+
+        val r1 = attribute(r)
+
+        Attributes(map.toMap) #:: tokenize(r1)
       case _ =>
         val (text, r1) = consume(r, false)
 
