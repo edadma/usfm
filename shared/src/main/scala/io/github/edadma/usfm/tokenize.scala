@@ -82,9 +82,10 @@ val paragraphMarkers =
     "b",
     "lit",
     "pb",
+    "q",
   )
 val numberedMarkers =
-  Set("toc", "toca", "imt", "is", "iq", "ili", "io", "imte", "mt", "mte", "ms", "s", "sd", "pi", "ph")
+  Set("toc", "toca", "imt", "is", "iq", "ili", "io", "imte", "mt", "mte", "ms", "s", "sd", "pi", "ph", "q")
 val pairedMarkers = Set(
   "ior",
   "iqt",
@@ -113,6 +114,8 @@ val pairedMarkers = Set(
   "no",
   "sc",
   "sup",
+  "f",
+  "fe",
 )
 val characterMarkers = Set(
   "v",
@@ -137,8 +140,11 @@ val characterMarkers = Set(
   "no",
   "sc",
   "sup",
+  "fr",
+  "ft", // note ???
 )
-val delimiters = Set('\\', '/', '~', '*', '|')
+val noteMarkers = Set("f", "fe")
+val delimiters  = Set('\\', '/', '~', '*', '|')
 
 @tailrec
 private def consume(r: CharReader, restrict: Boolean, buf: StringBuilder = new StringBuilder): (String, CharReader) =
@@ -188,7 +194,7 @@ def tokenize(input: CharReader): LazyList[Token] =
             Paragraph(marker, if number.nonEmpty then Some(number.toInt) else None).setPos(plus) #:: tokenize(
               r2.skipWhitespace,
             )
-          else if pairedMarkers(marker) then Character(marker).setPos(plus) #:: tokenize(r1.skipWhitespace)
+          else if noteMarkers(marker) then Note(marker).setPos(plus) #:: tokenize(r1.skipWhitespace)
           else if characterMarkers(marker) then Character(marker).setPos(plus) #:: tokenize(r1.skipWhitespace)
           else problem(plus, "invalid marker")
       case w if w.isWhitespace => Space #:: tokenize(r.next.skipWhitespace)
