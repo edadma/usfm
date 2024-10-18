@@ -108,11 +108,11 @@ def tokenize(input: String): Seq[Token] =
         tokenize(r.next.next)
       case '\\' =>
         val plus =
-          if r.ch == '+' then r.next
-          else r
+          if r.next.ch == '+' then r.next.next
+          else r.next
         val (marker, r1) = consume(plus, true)
 
-        if marker.isEmpty then problem(r, "empty marker")
+        if marker.isEmpty then problem(plus, "empty marker")
 
         if r1.ch == '*' then
           if !delimitedMarkers(marker) then problem(r, "invalid end marker")

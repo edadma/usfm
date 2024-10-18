@@ -20,3 +20,7 @@ class Tests extends AnyFreeSpec with Matchers:
   "text 4" in {
     tokenize("asdf\nzxcv") shouldBe Seq(Text("asdf"), Space, Text("zxcv"))
   }
+
+  "paragraph markers 1" in {
+    tokenize("""\p""") shouldBe Seq(Paragraph("p", None))
+  }
