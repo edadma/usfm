@@ -84,9 +84,60 @@ val paragraphMarkers =
   )
 val numberedMarkers =
   Set("toc", "toca", "imt", "is", "iq", "ili", "io", "imte", "mt", "mte", "ms", "s", "sd", "pi", "ph")
-val pairedMarkers    = Set("ior", "iqt", "rq", "ca", "va", "vp")
-val characterMarkers = Set("v")
-val delimiters       = Set('\\', '/', '~', '*', '|')
+val pairedMarkers = Set(
+  "ior",
+  "iqt",
+  "rq",
+  "ca",
+  "va",
+  "vp",
+  "add",
+  "bk",
+  "dc",
+  "k",
+  "nd",
+  "ord",
+  "pn",
+  "png",
+  "addpn",
+  "qt",
+  "sig",
+  "sls",
+  "tl",
+  "wj",
+  "em",
+  "bd",
+  "it",
+  "bdit",
+  "no",
+  "sc",
+  "sup",
+)
+val characterMarkers = Set(
+  "v",
+  "add",
+  "bk",
+  "dc",
+  "k",
+  "nd",
+  "ord",
+  "pn",
+  "png",
+  "addpn",
+  "qt",
+  "sig",
+  "sls",
+  "tl",
+  "wj",
+  "em",
+  "bd",
+  "it",
+  "bdit",
+  "no",
+  "sc",
+  "sup",
+)
+val delimiters = Set('\\', '/', '~', '*', '|')
 
 @tailrec
 private def consume(r: CharReader, restrict: Boolean, buf: StringBuilder = new StringBuilder): (String, CharReader) =
