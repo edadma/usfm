@@ -24,3 +24,58 @@ class Tests extends AnyFreeSpec with Matchers:
   "paragraph markers 1" in {
     tokenize("""\p""") shouldBe Seq(Paragraph("p", None))
   }
+
+  "paragraph markers 2" in {
+    tokenize("""\p asdf""") shouldBe Seq(Paragraph("p", None), Text("asdf"))
+  }
+
+  "paragraph markers 3" in {
+    a[RuntimeException] should be thrownBy tokenize("""\p1 asdf""")
+  }
+
+  "line break 1" in {
+    tokenize("""//""") shouldBe Seq(LineBreak)
+  }
+
+  "line break with text" in {
+    tokenize("""asdf//zxcv""") shouldBe Seq(Text("asdf"), LineBreak, Text("zxcv"))
+  }
+
+  "no-break space" in {
+    tokenize("asdf~zxcv") shouldBe Seq(Text("asdf"), NoBreakSpace, Text("zxcv"))
+  }
+
+  "multiple newlines treated as space" in {
+    tokenize("asdf\n\n\nzxcv") shouldBe Seq(Text("asdf"), Space, Text("zxcv"))
+  }
+
+  "empty marker" in {
+    a[RuntimeException] should be thrownBy tokenize("""\ asdf""")
+  }
+
+  "invalid marker" in {
+    a[RuntimeException] should be thrownBy tokenize("""\x""")
+  }
+
+//  "nested markers" in {
+//    tokenize("""\bd bold \it italic \it* \bd* \bd more bold \bd*""") shouldBe Seq(
+//      Character("bd"),
+//      Text("bold"),
+//      Space,
+//      Character("it"),
+//      Text("italic"),
+//      Space,
+//      End("it"),
+//      Space,
+//      End("bd"),
+//      Space,
+//      Character("bd"),
+//      Text("more bold"),
+//      Space,
+//      End("bd"),
+//    )
+//  }
+
+  "empty input" in {
+    tokenize("") shouldBe Seq.empty
+  }

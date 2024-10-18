@@ -88,24 +88,18 @@ val characterMarkers = Set("v")
 
 @tailrec
 private def consume(r: CharReader, restrict: Boolean, buf: StringBuilder = new StringBuilder): (String, CharReader) =
-  if r.ch.isWhitespace || (restrict && r.ch.isDigit) || r.ch == '\\' || r.ch == '*' || r.eoi then (buf.toString, r)
+  if r.ch.isWhitespace || (restrict && r.ch.isDigit) || r.ch == '\\' || r.ch == '/' || r.ch == '~' || r.ch == '*' || r.eoi
+  then (buf.toString, r)
   else
     buf += r.ch
     consume(r.next, restrict, buf)
 
-def tokenize(input: String): Seq[Token] =
-  val buf = new ArrayBuffer[Token]
-
-  @tailrec
-  def tokenize(r: CharReader): Seq[Token] =
+def tokenize(input: String): LazyList[Token] =
+  def tokenize(r: CharReader): LazyList[Token] =
     r.ch match
-      case CharReader.EOI => buf.toSeq
-      case '~' =>
-        buf += NoBreakSpace
-        tokenize(r.next)
-      case '/' if r.next.ch == '/' =>
-        buf += LineBreak
-        tokenize(r.next.next)
+      case CharReader.EOI          => LazyList.empty
+      case '~'                     => NoBreakSpace #:: tokenize(r.next)
+      case '/' if r.next.ch == '/' => LineBreak #:: tokenize(r.next.next)
       case '\\' =>
         val plus =
           if r.next.ch == '+' then r.next.next
@@ -117,35 +111,26 @@ def tokenize(input: String): Seq[Token] =
         if r1.ch == '*' then
           if !delimitedMarkers(marker) then problem(r, "invalid end marker")
 
-          buf += End(marker).setPos(r)
-          tokenize(r1.next.skipWhitespace)
+          End(marker).setPos(r) #:: tokenize(r1.next.skipWhitespace)
         else
           if paragraphMarkers(marker) then
-            val (number, r2) = if r.ch.isDigit then
+            val (number, r2) = if r1.ch.isDigit then
               if !numberedMarkers(marker) then problem(r, "not a numbered marker")
               consume(r1, false)
             else
               (if numberedMarkers(marker) then "1" else "", r1)
 
-            buf += Paragraph(marker, if number.nonEmpty then Some(number.toInt) else None).setPos(r)
-            tokenize(r2.skipWhitespace)
-          else if delimitedMarkers(marker) then
-            buf += Character(marker).setPos(r)
-            tokenize(r1.skipWhitespace)
-          else if characterMarkers(marker) then
-            buf += Character(marker).setPos(r)
-            tokenize(r1.skipWhitespace)
+            Paragraph(marker, if number.nonEmpty then Some(number.toInt) else None).setPos(r) #:: tokenize(
+              r2.skipWhitespace,
+            )
+          else if delimitedMarkers(marker) then Character(marker).setPos(r) #:: tokenize(r1.skipWhitespace)
+          else if characterMarkers(marker) then Character(marker).setPos(r) #:: tokenize(r1.skipWhitespace)
           else problem(r, "invalid marker")
-      case w if w.isWhitespace =>
-        if buf.nonEmpty && buf.last != Space then
-          buf += Space
-
-        tokenize(r.next.skipWhitespace)
+      case w if w.isWhitespace => Space #:: tokenize(r.next.skipWhitespace)
       case _ =>
         val (text, r1) = consume(r, false)
 
-        buf += Text(text)
-        tokenize(r1)
+        Text(text) #:: tokenize(r1)
   end tokenize
 
   tokenize(CharReader.fromString(input))
