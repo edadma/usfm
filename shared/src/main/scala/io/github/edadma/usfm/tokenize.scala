@@ -174,23 +174,23 @@ def tokenize(input: CharReader): LazyList[Token] =
         if marker.isEmpty then problem(plus, "empty marker")
 
         if r1.ch == '*' then
-          if !pairedMarkers(marker) then problem(r, "invalid end marker")
+          if !pairedMarkers(marker) then problem(plus, "invalid end marker")
 
-          End(marker).setPos(r) #:: tokenize(r1.next.skipWhitespace)
+          End(marker).setPos(plus) #:: tokenize(r1.next.skipWhitespace)
         else
           if paragraphMarkers(marker) then
             val (number, r2) = if r1.ch.isDigit then
-              if !numberedMarkers(marker) then problem(r, "not a numbered marker")
+              if !numberedMarkers(marker) then problem(plus, "not a numbered marker")
               consume(r1, false)
             else
               (if numberedMarkers(marker) then "1" else "", r1)
 
-            Paragraph(marker, if number.nonEmpty then Some(number.toInt) else None).setPos(r) #:: tokenize(
+            Paragraph(marker, if number.nonEmpty then Some(number.toInt) else None).setPos(plus) #:: tokenize(
               r2.skipWhitespace,
             )
-          else if pairedMarkers(marker) then Character(marker).setPos(r) #:: tokenize(r1.skipWhitespace)
-          else if characterMarkers(marker) then Character(marker).setPos(r) #:: tokenize(r1.skipWhitespace)
-          else problem(r, "invalid marker")
+          else if pairedMarkers(marker) then Character(marker).setPos(plus) #:: tokenize(r1.skipWhitespace)
+          else if characterMarkers(marker) then Character(marker).setPos(plus) #:: tokenize(r1.skipWhitespace)
+          else problem(plus, "invalid marker")
       case w if w.isWhitespace => Space #:: tokenize(r.next.skipWhitespace)
       case '|' =>
         val map = new mutable.HashMap[String, String]

@@ -7,4 +7,4 @@ import pprint.pprintln
 @main def run(): Unit =
   val toks = tokenize(CharReader.fromFile("bsb_usfm/01GENBSB.usfm"))
 
-  pprintln(toks take 20)
+  pprintln(toks.length)
