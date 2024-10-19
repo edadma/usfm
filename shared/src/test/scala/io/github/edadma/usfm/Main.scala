@@ -21,4 +21,4 @@ import pprint.pprintln
   val toks = tokenize(CharReader.fromFile("bsb_usfm/42MRKBSB.usfm"))
   val doc  = parse(toks)
 
-  pprintln(doc)
+  pprintln(doc take 2)
