@@ -1,7 +1,5 @@
 package io.github.edadma.usfm
 
-import scala.collection.immutable.{AbstractSeq, LinearSeq}
-
 def parse(toks: LazyList[Token]): LazyList[Elem] =
   toks match
     case end if end == EOI => LazyList.empty
