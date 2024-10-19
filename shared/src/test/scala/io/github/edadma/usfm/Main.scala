@@ -18,7 +18,7 @@ import pprint.pprintln
       |\m
       |\v 1 This is the beginning of the gospel of Jesus Christ, the Son of God.\f + \fr 1:1 \ft SBL and WH the beginning of the gospel of Jesus Christ.\f*
       |""".stripMargin
-  val toks = tokenize(input)
+  val toks = tokenize(CharReader.fromFile("bsb_usfm/42MRKBSB.usfm"))
   val doc  = parse(toks)
 
   pprintln(doc)
