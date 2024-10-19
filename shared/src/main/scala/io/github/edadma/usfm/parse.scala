@@ -15,4 +15,6 @@ def parse(toks: LazyList[Token]): LazyList[Elem] =
           val (p, rest) = tail.splitAt(idx)
 
           ParagraphElem(name, num, dropSpace(p)) #:: parse(rest)
+    case NoteStart(name) #:: tail if pairedMarkers(name) =>
+
     case e #:: tail => e #:: parse(tail)
