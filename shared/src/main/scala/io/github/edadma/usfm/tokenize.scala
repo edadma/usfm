@@ -10,8 +10,8 @@ import pprint.pprintln
 
 abstract class Elem
 
-case class ParagraphElem(name: String, num: Option[Int], attr: Map[String, String], body: Seq[Elem]) extends Elem
-case class CharacterElem(name: String, body: Seq[Elem])                                              extends Elem
+case class ParagraphElem(name: String, num: Option[Int], body: Seq[Elem]) extends Elem
+case class CharacterElem(name: String, body: Seq[Elem])                   extends Elem
 
 abstract class Token extends Elem:
   var pos: CharReader = uninitialized
