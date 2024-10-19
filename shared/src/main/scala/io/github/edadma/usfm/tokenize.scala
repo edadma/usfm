@@ -10,8 +10,8 @@ import pprint.pprintln
 
 abstract class Elem
 
-case class Paragraph(name: String, num: Option[Int], attr: Map[String, String], body: Seq[Elem]) extends Elem
-case class Character(name: String, body: Seq[Elem])                                              extends Elem
+case class ParagraphElem(name: String, num: Option[Int], attr: Map[String, String], body: Seq[Elem]) extends Elem
+case class CharacterElem(name: String, body: Seq[Elem])                                              extends Elem
 
 abstract class Token extends Elem:
   var pos: CharReader = uninitialized
@@ -176,7 +176,7 @@ def tokenize(input: String): LazyList[Token] = tokenize(CharReader.fromString(in
 def tokenize(input: CharReader): LazyList[Token] =
   def tokenize(r: CharReader): LazyList[Token] =
     r.ch match
-      case CharReader.EOI          => LazyList(EOI)
+      case CharReader.EOI          => LazyList.empty // LazyList(EOI)
       case '~'                     => NoBreakSpace #:: tokenize(r.next)
       case '/' if r.next.ch == '/' => LineBreak #:: tokenize(r.next.next)
       case '\\' =>
