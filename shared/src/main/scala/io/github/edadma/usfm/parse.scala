@@ -36,13 +36,13 @@ def parseInline(toks: LazyList[Token]): LazyList[Elem] =
 
       if !rest.headOption.contains(End(name)) then problem(rest.head.pos, s"expected '$name' end marker")
 
-      NoteElem(name, body) #:: rest
+      NoteElem(name, body) #:: parseInline(rest.tail)
     case (t: ContentToken) #:: tail => t #:: parseInline(tail)
     case CharacterStart("v") #:: tail =>
       tail match
         case Text(verse) #:: rest if verse.forall(_.isDigit) =>
-          if rest.head == Space then VerseElem(verse) #:: rest.tail
-          else VerseElem(verse) #:: rest
+          if rest.head == Space then VerseElem(verse) #:: parseInline(rest.tail)
+          else VerseElem(verse) #:: parseInline(rest)
         case t #:: _ => problem(t.pos, "verse number expected")
 
 @tailrec

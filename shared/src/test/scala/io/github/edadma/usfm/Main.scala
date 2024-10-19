@@ -21,4 +21,4 @@ import pprint.pprintln
   val toks = tokenize(input)
   val doc  = parse(toks)
 
-  pprintln(doc take 10)
+  pprintln(doc)
