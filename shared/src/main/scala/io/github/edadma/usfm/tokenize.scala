@@ -4,32 +4,8 @@ import io.github.edadma.char_reader.CharReader
 
 import scala.annotation.tailrec
 import scala.collection.mutable
-import scala.compiletime.uninitialized
 
 import pprint.pprintln
-
-abstract class Elem
-
-case class ParagraphElem(name: String, num: Option[Int], body: Seq[Elem]) extends Elem
-case class CharacterElem(name: String, body: Seq[Elem])                   extends Elem
-
-abstract class Token extends Elem:
-  var pos: CharReader = uninitialized
-
-  def setPos(r: CharReader): Token =
-    pos = r
-    this
-
-case class ParagraphStart(name: String, num: Option[Int]) extends Token
-case class CharacterStart(name: String)                   extends Token
-case class Attributes(attr: Map[String, String])          extends Token
-case class NoteStart(name: String)                        extends Token
-case class End(name: String)                              extends Token
-case class Text(s: String)                                extends Token
-case object Space                                         extends Token
-case object NoBreakSpace                                  extends Token
-case object LineBreak                                     extends Token
-case object EOI                                           extends Token
 
 val paragraphMarkers =
   Set(
@@ -176,7 +152,7 @@ def tokenize(input: String): LazyList[Token] = tokenize(CharReader.fromString(in
 def tokenize(input: CharReader): LazyList[Token] =
   def tokenize(r: CharReader): LazyList[Token] =
     r.ch match
-      case CharReader.EOI          => LazyList.empty // LazyList(EOI)
+      case CharReader.EOI          => LazyList(EOI().setPos(r))
       case '~'                     => NoBreakSpace #:: tokenize(r.next)
       case '/' if r.next.ch == '/' => LineBreak #:: tokenize(r.next.next)
       case '\\' =>
