@@ -6,23 +6,30 @@ import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.compiletime.uninitialized
 
-abstract class Token:
+import pprint.pprintln
+
+abstract class Elem
+
+case class Paragraph(name: String, num: Option[Int], attr: Map[String, String], body: Seq[Elem]) extends Elem
+case class Character(name: String, body: Seq[Elem])                                              extends Elem
+
+abstract class Token extends Elem:
   var pos: CharReader = uninitialized
 
   def setPos(r: CharReader): Token =
     pos = r
     this
 
-case class Paragraph(name: String, num: Option[Int]) extends Token
-case class Character(name: String)                   extends Token
-case class Attributes(attr: Map[String, String])     extends Token
-case class Note(name: String)                        extends Token
-case class End(name: String)                         extends Token
-case class Text(s: String)                           extends Token
-case object Space                                    extends Token
-case object NoBreakSpace                             extends Token
-case object LineBreak                                extends Token
-case object EOI                                      extends Token
+case class ParagraphStart(name: String, num: Option[Int]) extends Token
+case class CharacterStart(name: String)                   extends Token
+case class Attributes(attr: Map[String, String])          extends Token
+case class NoteStart(name: String)                        extends Token
+case class End(name: String)                              extends Token
+case class Text(s: String)                                extends Token
+case object Space                                         extends Token
+case object NoBreakSpace                                  extends Token
+case object LineBreak                                     extends Token
+case object EOI                                           extends Token
 
 val paragraphMarkers =
   Set(
@@ -192,11 +199,11 @@ def tokenize(input: CharReader): LazyList[Token] =
             else
               (if numberedMarkers(marker) then "1" else "", r1)
 
-            Paragraph(marker, if number.nonEmpty then Some(number.toInt) else None).setPos(plus) #:: tokenize(
+            ParagraphStart(marker, if number.nonEmpty then Some(number.toInt) else None).setPos(plus) #:: tokenize(
               r2.skipWhitespace,
             )
-          else if noteMarkers(marker) then Note(marker).setPos(plus) #:: tokenize(r1.skipWhitespace)
-          else if characterMarkers(marker) then Character(marker).setPos(plus) #:: tokenize(r1.skipWhitespace)
+          else if noteMarkers(marker) then NoteStart(marker).setPos(plus) #:: tokenize(r1.skipWhitespace)
+          else if characterMarkers(marker) then CharacterStart(marker).setPos(plus) #:: tokenize(r1.skipWhitespace)
           else problem(plus, "invalid marker")
       case w if w.isWhitespace => Space #:: tokenize(r.next.skipWhitespace)
       case '|' =>
@@ -228,5 +235,9 @@ def tokenize(input: CharReader): LazyList[Token] =
         Text(text) #:: tokenize(r1)
   end tokenize
 
-  tokenize(input)
+  val start =
+    if input.ch == '\ufeff' then input.next
+    else input
+
+  tokenize(start.skipWhitespace)
 end tokenize

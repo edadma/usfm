@@ -22,11 +22,11 @@ class TokenizeTests extends AnyFreeSpec with Matchers:
   }
 
   "paragraph markers 1" in {
-    tokenize("""\p""") shouldBe Seq(Paragraph("p", None), EOI)
+    tokenize("""\p""") shouldBe Seq(ParagraphStart("p", None), EOI)
   }
 
   "paragraph markers 2" in {
-    tokenize("""\p asdf""") shouldBe Seq(Paragraph("p", None), Text("asdf"), EOI)
+    tokenize("""\p asdf""") shouldBe Seq(ParagraphStart("p", None), Text("asdf"), EOI)
   }
 
   "paragraph markers 3" in {
