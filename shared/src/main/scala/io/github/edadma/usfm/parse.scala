@@ -31,7 +31,6 @@ def parseInline(toks: LazyList[Token]): LazyList[Elem] =
   toks match
     case LazyList() => LazyList.empty
     case NoteStart(name) #:: tail if pairedMarkers(name) =>
-      println(name)
       val (body, rest) = parseBody(tail)
 
       if !rest.headOption.contains(End(name)) then problem(rest.head.pos, s"expected '$name' end marker")
