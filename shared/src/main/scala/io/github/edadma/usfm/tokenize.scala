@@ -5,7 +5,7 @@ import io.github.edadma.char_reader.CharReader
 import scala.annotation.tailrec
 import scala.collection.mutable
 
-import pprint.pprintln
+//import pprint.pprintln
 
 val paragraphMarkers =
   Set(
